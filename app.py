@@ -142,13 +142,21 @@ if df is not None:
     def get_strategy(row):
         r, f, m = row['Recency'], row['Frequency'], row['Monetary']
         if r < avg_r and f > avg_f and m > avg_m:
-            return "Champions", "Pertahankan! Beri akses VIP, produk eksklusif, dan layanan prioritas.", "green"
-        elif r > avg_r and m > avg_m:
-            return "At Risk", "Berisiko hilang. Kirim personal email, survey kepuasan, atau diskon win-back.", "red"
-        elif f < avg_f and m < avg_m:
-            return "New / Low Value", "Edukasi produk, tawarkan diskon pembelian kedua, dan onboarding.", "blue"
-        else:
-            return "Potential Loyalist", "Tawarkan membership atau bundling untuk meningkatkan nilai transaksi.", "orange"
+             return "High-Value Loyalists (Champions)", \
+                    "**VIP Program:** Berikan akses eksklusif & prioritas layanan.\n**Rewards:** Cashback tinggi & bonus poin.\n**Retensi:** Fokus jangka panjang (Gold -> Platinum).", \
+                    "green"
+        
+        # 3. At-Risk / Inactive (R tinggi, F rendah, M rendah)
+        elif r > avg_r and f < avg_f:
+            return "At-Risk / Inactive", \
+                   "**Reaktivasi:** Voucher 'We Miss You' (diskon 20-30%).\n**Urgency:** Flash sale & countdown promo.\n**Feedback:** Survey kenapa berhenti belanja.", \
+                   "red"
+
+        # 2. Regular Customers (Sisanya - Aktivitas stabil/moderat)
+        else: 
+            return "Regular Customers", \
+                   "**Frequency Booster:** Promo Beli 2 Gratis 1 atau Bundling.\n**Upselling:** Tawarkan free shipping threshold.\n**Engagement:** Edukasi produk via konten menarik.", \
+                   "blue"
 
     for index, row in cluster_summary.iterrows():
         label, strategy, color = get_strategy(row)
