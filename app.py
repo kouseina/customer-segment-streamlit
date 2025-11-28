@@ -1,8 +1,13 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+# Import plotting libraries, but fail gracefully so the app doesn't crash
+try:
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    _PLOTTING_AVAILABLE = True
+except Exception:
+    _PLOTTING_AVAILABLE = False
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
@@ -51,17 +56,23 @@ if uploaded_file is not None:
     with col1:
         st.markdown("**Distribusi Kategori Produk**")
         if 'ProductCategory' in df.columns:
-            fig, ax = plt.subplots(figsize=(6,4))
-            sns.countplot(data=df, x="ProductCategory", ax=ax, palette="viridis")
-            plt.xticks(rotation=45)
-            st.pyplot(fig)
+            if _PLOTTING_AVAILABLE:
+                fig, ax = plt.subplots(figsize=(6,4))
+                sns.countplot(data=df, x="ProductCategory", ax=ax, palette="viridis")
+                plt.xticks(rotation=45)
+                st.pyplot(fig)
+            else:
+                st.warning("Plotting libraries are not available. Install dependencies (see README) to enable visualizations.")
             
     with col2:
         st.markdown("**Metode Pembayaran**")
         if 'PaymentMethod' in df.columns:
-            fig, ax = plt.subplots(figsize=(6,4))
-            sns.countplot(data=df, x="PaymentMethod", ax=ax, palette="pastel")
-            st.pyplot(fig)
+            if _PLOTTING_AVAILABLE:
+                fig, ax = plt.subplots(figsize=(6,4))
+                sns.countplot(data=df, x="PaymentMethod", ax=ax, palette="pastel")
+                st.pyplot(fig)
+            else:
+                st.warning("Plotting libraries are not available. Install dependencies (see README) to enable visualizations.")
 
     # --- 4. Kalkulasi RFM ---
     st.subheader("🧮 RFM Calculation")
@@ -111,10 +122,13 @@ if uploaded_file is not None:
     rfm['PCA2'] = pca_result[:, 1]
     
     st.markdown("**Visualisasi Kluster (PCA 2D)**")
-    fig, ax = plt.subplots(figsize=(8, 6))
-    sns.scatterplot(data=rfm, x='PCA1', y='PCA2', hue='Cluster', palette='tab10', s=60, ax=ax)
-    plt.title("Customer Segments")
-    st.pyplot(fig)
+    if _PLOTTING_AVAILABLE:
+        fig, ax = plt.subplots(figsize=(8, 6))
+        sns.scatterplot(data=rfm, x='PCA1', y='PCA2', hue='Cluster', palette='tab10', s=60, ax=ax)
+        plt.title("Customer Segments")
+        st.pyplot(fig)
+    else:
+        st.warning("Plotting libraries are not available. Install dependencies (see README) to enable visualizations.")
     
     # Download Result
     st.download_button(
