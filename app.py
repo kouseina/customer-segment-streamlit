@@ -85,8 +85,9 @@ if uploaded_file is not None:
     st.dataframe(rfm.head())
     
     # --- 5. K-Means Clustering ---
-    st.sidebar.header("2. Konfigurasi Model")
-    num_clusters = st.sidebar.slider("Pilih Jumlah Kluster (k)", min_value=2, max_value=10, value=4)
+    # st.sidebar.header("2. Konfigurasi Model")
+    # num_clusters = st.sidebar.slider("Pilih Jumlah Kluster (k)", min_value=2, max_value=10, value=4)
+    num_clusters = 4
     
     # Scaling
     scaler = StandardScaler()
