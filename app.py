@@ -24,22 +24,11 @@ st.write("Aplikasi ini mengotomatisasi segmentasi pelanggan menggunakan metode R
 # Nama file default di project Anda
 DEFAULT_FILE_PATH = 'urbanmart_data.csv'
 
-st.sidebar.header("1. Upload Data")
-uploaded_file = st.sidebar.file_uploader("Upload file CSV (Opsional)", type=["csv"])
-
 df = None
 data_source_info = ""
 
-# Logika Prioritas: Upload > Default
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
-    data_source_info = "Menggunakan Data User (Upload)"
-elif os.path.exists(DEFAULT_FILE_PATH):
-    df = pd.read_csv(DEFAULT_FILE_PATH)
-    data_source_info = f"Menggunakan Data Default Project ({DEFAULT_FILE_PATH})"
-else:
-    st.error(f"File '{DEFAULT_FILE_PATH}' tidak ditemukan di project dan tidak ada file yang diupload.")
-    st.stop()
+df = pd.read_csv(DEFAULT_FILE_PATH)
+data_source_info = f"Menggunakan Data Default Project ({DEFAULT_FILE_PATH})"
 
 # --- JIKA DATA BERHASIL DILOAD ---
 if df is not None:
