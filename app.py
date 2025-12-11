@@ -124,42 +124,116 @@ if df is not None:
     st.divider()
     st.subheader("Rekomendasi Strategi Pemasaran")
 
-    avg_r = rfm['Recency'].mean()
-    avg_f = rfm['Frequency'].mean()
-    avg_m = rfm['Monetary'].mean()
+    # Definisi Strategi per Kluster (Sesuai User Request)
+    # Definisi 4 Profil Strategi dari User (Template)
+    # Kita akan masukkan Cluster ID secara dinamis ke sini nanti
+    STRATEGY_TEMPLATES = {
+        "best": {
+            "label": "High-Value Loyalists (Champions)",
+            "description": "Kluster ini adalah pelanggan terbaik, dengan frekuensi paling tinggi dan monetary terbesar.",
+            "strategies": [
+                "Berikan benefit VIP & akses eksklusif.",
+                "Sediakan rewards premium bernilai besar.",
+                "Personalisasi promosi berdasarkan pola belanja.",
+                "Pertahankan mereka lewat tier loyalitas tertinggi."
+            ],
+            "color": "green"
+        },
+        "potential": {
+            "label": "High-Value Loyalists (Champions)",
+            "description": "Pelanggan di kluster ini baru bertransaksi, cukup sering berbelanja, dan memiliki nilai belanja tinggi.",
+            "strategies": [
+                "Berikan akses khusus & layanan prioritas.",
+                "Tawarkan cashback tinggi dan bonus poin.",
+                "Kirimkan penawaran personal sesuai riwayat belanja.",
+                "Dorong loyalitas lewat program tiering."
+            ],
+            "color": "green"
+        },
+        "regular": {
+            "label": "Regular Customers",
+            "description": "Pelanggan ini rutin belanja, tapi frekuensinya sedang dan nilai belanjanya belum tinggi.",
+            "strategies": [
+                "Gunakan promo bundling & hemat.",
+                "Terapkan free-shipping threshold.",
+                "Rekomendasikan produk untuk upselling & cross-selling.",
+                "Berikan reward kecil untuk aktivitas rutin."
+            ],
+            "color": "blue"
+        },
+        "risk": {
+            "label": "At-Risk / Inactive",
+            "description": "Pelanggan ini lama tidak belanja, padahal sebelumnya cukup sering dan nilai belanjanya besar.",
+            "strategies": [
+                "Tawarkan voucher comeback & diskon 20-30%.",
+                "Gunakan flash sale atau promo countdown.",
+                "Kirimkan pengingat produk favorit mereka.",
+                "Minta feedback singkat untuk perbaikan layanan."
+            ],
+            "color": "orange"
+        }
+    }
 
-    def get_strategy(row):
-        r, f, m = row['Recency'], row['Frequency'], row['Monetary']
-        if r < avg_r and f > avg_f and m > avg_m:
-             return "High-Value Loyalists (Champions)", \
-                    "**VIP Program:** Berikan akses eksklusif & prioritas layanan.\n**Rewards:** Cashback tinggi & bonus poin.\n**Retensi:** Fokus jangka panjang (Gold -> Platinum).", \
-                    "green"
-        
-        # 3. At-Risk / Inactive (R tinggi, F rendah, M rendah)
-        elif r > avg_r and f < avg_f:
-            return "At-Risk / Inactive", \
-                   "**Reaktivasi:** Voucher 'We Miss You' (diskon 20-30%).\n**Urgency:** Flash sale & countdown promo.\n**Feedback:** Survey kenapa berhenti belanja.", \
-                   "red"
-
-        # 2. Regular Customers (Sisanya - Aktivitas stabil/moderat)
-        else: 
-            return "Regular Customers", \
-                   "**Frequency Booster:** Promo Beli 2 Gratis 1 atau Bundling.\n**Upselling:** Tawarkan free shipping threshold.\n**Engagement:** Edukasi produk via konten menarik.", \
-                   "blue"
+    # LOGIKA DINAMIS: Assign template ke Cluster ID berdasarkan statistik
+    # 1. Cari Cluster 'At-Risk' (Paling lama tidak belanja -> Recency Tertinggi)
+    at_risk_cluster = cluster_summary.loc[cluster_summary['Recency'].idxmax()]
+    risk_id = int(at_risk_cluster['Cluster'])
+    
+    # 2. Sisa kluster (Active customers)
+    active_clusters = cluster_summary[cluster_summary['Cluster'] != risk_id].copy()
+    
+    # 3. Urutkan active clusters berdasarkan Monetary (Kekayaan)
+    #    Rank 1 (Terbesar) -> Best (Champions)
+    #    Rank 2 (Menengah) -> Potential
+    #    Rank 3 (Terbawah) -> Regular
+    active_clusters = active_clusters.sort_values(by='Monetary', ascending=False)
+    
+    # Ambil ID berdasarkan urutan
+    if len(active_clusters) >= 3:
+        best_id = int(active_clusters.iloc[0]['Cluster'])
+        potential_id = int(active_clusters.iloc[1]['Cluster'])
+        regular_id = int(active_clusters.iloc[2]['Cluster'])
+    else:
+        # Fallback simple jika jumlah kluster < 4 (misal user ubah slider n_clusters)
+        best_id = int(active_clusters.iloc[0]['Cluster']) if len(active_clusters) > 0 else -1
+        potential_id = int(active_clusters.iloc[1]['Cluster']) if len(active_clusters) > 1 else -1
+        regular_id = -1
+    
+    # Mapping Final: ID -> Template Key
+    cluster_mapping = {}
+    cluster_mapping[risk_id] = "risk"
+    cluster_mapping[best_id] = "best"
+    cluster_mapping[potential_id] = "potential"
+    cluster_mapping[regular_id] = "regular"
 
     for index, row in cluster_summary.iterrows():
-        label, strategy, color = get_strategy(row)
         cluster_id = int(row['Cluster'])
         count = rfm[rfm['Cluster'] == cluster_id].shape[0]
         
+        # Ambil template berdasarkan mapping dinamis
+        template_key = cluster_mapping.get(cluster_id, "regular") # Default ke regular jika bingung
+        cluster_info = STRATEGY_TEMPLATES.get(template_key)
+        
+        # Fallback jika somehow None (should not happen with default logic)
+        if not cluster_info:
+             cluster_info = STRATEGY_TEMPLATES["regular"]
+        
         with st.container():
-            st.markdown(f"#### Kluster {cluster_id}: :{color}[{label}]")
+            st.markdown(f"#### Kluster {cluster_id}: :{cluster_info['color']}[{cluster_info['label']}]")
+            
+            # Tampilkan deskripsi jika ada
+            if cluster_info['description']:
+                st.write(f"_{cluster_info['description']}_")
+                
             col1, col2, col3, col4 = st.columns(4)
             col1.markdown(f"👥 **Total:** {count} User")
             col2.markdown(f"🕒 **Recency:** {row['Recency']:.0f} hari")
             col3.markdown(f"🛒 **Freq:** {row['Frequency']:.1f}x")
             col4.markdown(f"💰 **Uang:** Rp {row['Monetary']:,.0f}")
-            st.info(f"**Strategi:** {strategy}")
+            
+            # Format strategi menjadi list bullet points
+            formatted_strategies = "\n".join([f"- {s}" for s in cluster_info['strategies']])
+            st.info(f"**Strategi:**\n\n{formatted_strategies}")
             st.markdown("---")
 
     # Download Button
