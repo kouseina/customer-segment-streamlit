@@ -70,6 +70,32 @@ if df is not None:
             sns.countplot(data=df, x="PaymentMethod", ax=ax, palette="pastel")
             st.pyplot(fig)
 
+    # --- NEW: EDA Tambahan (Monthly Trend & Region) ---
+    st.divider()
+    col3, col4 = st.columns(2)
+
+    with col3:
+        st.markdown("**Tren Transaksi Bulanan**")
+        if 'TransactionDate' in df.columns and 'TransactionValue' in df.columns and _PLOTTING_AVAILABLE:
+            # Resample per bulan
+            monthly_sales = df.set_index('TransactionDate').resample('ME')['TransactionValue'].sum().reset_index()
+            
+            fig, ax = plt.subplots(figsize=(6,4))
+            sns.lineplot(data=monthly_sales, x='TransactionDate', y='TransactionValue', marker='o', ax=ax, color='teal')
+            ax.set_title("Total Transaksi per Bulan")
+            ax.set_ylabel("Total Nilai (Rp)")
+            ax.set_xlabel("Bulan")
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
+
+    with col4:
+        st.markdown("**Transaksi per Region**")
+        if 'Region' in df.columns and _PLOTTING_AVAILABLE:
+            fig, ax = plt.subplots(figsize=(6,4))
+            sns.countplot(data=df, y="Region", ax=ax, palette="magma", order=df['Region'].value_counts().index)
+            ax.set_title("Jumlah Transaksi per Wilayah")
+            st.pyplot(fig)
+
     # --- 4. Kalkulasi RFM ---
     st.divider()
     st.subheader("RFM Calculation")
